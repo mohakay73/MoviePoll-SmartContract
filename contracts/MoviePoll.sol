@@ -45,19 +45,21 @@ contract MoviePoll{
     }
 
   
-    function startPoll(string[] memory _movies, uint _durationInMinutes) public onlyOwner {
-        require(currentPoll.status != PollStatus.Voting, "A poll is already active");
+function startPoll(string[] memory _movies, uint _durationInMinutes) public onlyOwner {
+    require(_movies.length > 0, "Movies list cannot be empty");
+    require(_durationInMinutes > 0, "Duration must be greater than zero");
+    require(currentPoll.status != PollStatus.Voting, "A poll is already active");
 
-        delete currentPoll; 
-        for (uint i = 0; i < _movies.length; i++) {
-            currentPoll.validMovies[_movies[i]] = true;
-        }
-        currentPoll.movies = _movies;
-        currentPoll.endTime = block.timestamp + (_durationInMinutes * 1 minutes);
-        currentPoll.status = PollStatus.Voting;
-
-        emit VotingStarted(currentPoll.endTime);
+    delete currentPoll; 
+    for (uint i = 0; i < _movies.length; i++) {
+        currentPoll.validMovies[_movies[i]] = true;
     }
+    currentPoll.movies = _movies;
+    currentPoll.endTime = block.timestamp + (_durationInMinutes * 1 minutes);
+    currentPoll.status = PollStatus.Voting;
+
+    emit VotingStarted(currentPoll.endTime);
+}
 
      function getPollStatus() public view returns (PollStatus) {
         return currentPoll.status;
