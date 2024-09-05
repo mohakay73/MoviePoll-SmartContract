@@ -83,12 +83,6 @@ describe('MoviePolll', function () {
   });
 
   describe('Revote', function () {
-    async function deployMoviePollFixture() {
-      const [owner, addr1, addr2] = await ethers.getSigners();
-      const MoviePoll = await ethers.getContractFactory('MoviePoll');
-      const moviePoll = await MoviePoll.deploy();
-      return { moviePoll, owner, addr1, addr2 };
-    }
     it('Should allow a voter to change their vote', async function () {
       const { moviePoll, addr1 } = await deployMoviePollFixture();
       await moviePoll.startPoll(['Movie1', 'Movie2'], 10);
