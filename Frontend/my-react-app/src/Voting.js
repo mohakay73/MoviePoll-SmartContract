@@ -17,7 +17,7 @@ const Voting = () => {
 
   const [walletAddress, setWalletAddress] = useState('');
   const [status, setStatus] = useState('Unable to connect to the blockchain');
-  const [pollStatus, setPollStatus] = useState('Not Started');
+  const [pollStatus, setPollStatus] = useState('');
 
   const [hasVoted, setHasVoted] = useState(false);
   const [movies, setMovies] = useState(['', '', '']);

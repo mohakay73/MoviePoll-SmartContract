@@ -10,8 +10,6 @@ const contractAddress = process.env.REACT_APP_CONTRACT;
 
 const moviePollContract = new web3.eth.Contract(contractABI, contractAddress);
 
-// ... rest of your code
-
 export const connectWallet = async () => {
   if (window.ethereum) {
     try {
@@ -84,8 +82,17 @@ export const getCurrentWalletConnected = async () => {
 };
 
 export const checkIfVoted = async (address) => {
-  const voted = await moviePollContract.methods.userVotes(address).call();
-  return voted;
+  try {
+    // Get the user's vote
+    const userVote = await moviePollContract.methods
+      .getUserVote(address)
+      .call();
+    // If the user's vote is not an empty string, they have voted
+    return userVote !== '';
+  } catch (err) {
+    console.error('Error checking if user voted:', err);
+    return false;
+  }
 };
 
 export const walletListener = (
@@ -115,6 +122,9 @@ export const startPoll = async (walletAddress, movies, durationInMinutes) => {
     const durationInSeconds = durationInMinutes * 60;
     const filteredMovies = movies.filter((movie) => movie.trim() !== '');
     await moviePollContract.methods
+      .startPoll(filteredMovies, durationInSeconds)
+      .send({ from: walletAddress });
+    const result = await moviePollContract.methods
       .startPoll(filteredMovies, durationInSeconds)
       .send({ from: walletAddress });
     return {
