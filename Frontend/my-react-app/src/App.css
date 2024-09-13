@@ -1,38 +1,87 @@
-.App {
+body {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+  background-color: rgb(43, 42, 40);
+}
+
+.box {
+  background-color: rgb(52, 71, 60);
+  padding: 20px;
+  border-radius: 10;
+  box-shadow: 0px 0px 15px rgba(250, 237, 237, 0.1);
   text-align: center;
+  width: 400px;
 }
 
-.App-logo {
-  height: 40vmin;
-  pointer-events: none;
-}
-
-@media (prefers-reduced-motion: no-preference) {
-  .App-logo {
-    animation: App-logo-spin infinite 20s linear;
-  }
-}
-
-.App-header {
-  background-color: #282c34;
-  min-height: 100vh;
+.header {
   display: flex;
   flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  font-size: calc(10px + 2vmin);
+  align-items: flex-end;
+  margin-bottom: 20px;
+  width: 100%;
+}
+
+.StartPoll,
+.Revote {
+  background-color: rgb(205, 146, 28);
   color: white;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 5px;
+  cursor: pointer;
 }
 
-.App-link {
-  color: #61dafb;
+.walletButton {
+  background-color: rgb(211, 92, 28);
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 5px;
+  cursor: pointer;
 }
 
-@keyframes App-logo-spin {
-  from {
-    transform: rotate(0deg);
-  }
-  to {
-    transform: rotate(360deg);
-  }
+.voteButton {
+  background-color: rgb(71, 118, 120);
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+.StartPoll:hover,
+.Revote:hover {
+  background-color: rgb(99, 82, 8);
+}
+.walletButton:hover {
+  background-color: rgb(128, 55, 16);
+}
+
+.voteButton:hover {
+  background-color: rgb(40, 63, 63);
+}
+
+.voteButton:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.Revote:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.walletAddress {
+  text-align: right;
+  color: darkgray;
+}
+
+.status {
+  color: darkgrey;
+}
+.moviesList {
+  display: flex;
+  justify-content: space-around;
 }
