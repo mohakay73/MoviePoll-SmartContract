@@ -119,20 +119,29 @@ export const walletListener = (
 
 export const startPoll = async (walletAddress, movies, durationInMinutes) => {
   try {
+    const pollStatus = await moviePollContract.methods.getPollStatus().call();
+    if (pollStatus !== '0') {
+      // '0' corresponds to NotStarted
+      return {
+        status:
+          'Cannot start a new poll: A poll is already active or has ended but not reset.',
+      };
+    }
+
     const durationInSeconds = durationInMinutes * 60;
     const filteredMovies = movies.filter((movie) => movie.trim() !== '');
-    await moviePollContract.methods
-      .startPoll(filteredMovies, durationInSeconds)
-      .send({ from: walletAddress });
     const result = await moviePollContract.methods
       .startPoll(filteredMovies, durationInSeconds)
       .send({ from: walletAddress });
+
     return {
       status: 'Successfully started the poll',
+      result: result,
     };
   } catch (err) {
+    console.error('Error in startPoll:', err);
     return {
-      status: 'Error starting the poll' + err.message,
+      status: 'Error starting the poll: ' + err.message,
     };
   }
 };
@@ -147,5 +156,36 @@ export const vote = async (walletAddress, movie) => {
     return {
       status: 'Error voting: ' + err.message,
     };
+  }
+};
+
+const pollStatus = await moviePollContract.methods.getPollStatus().call();
+console.log('Current poll status:', pollStatus);
+
+async function checkPollDetails() {
+  const pollStatus = await moviePollContract.methods.getPollStatus().call();
+  console.log('Current poll status:', pollStatus);
+
+  const endTime = await moviePollContract.methods.currentPoll().call().endTime;
+  const currentTime = Math.floor(Date.now() / 1000);
+  console.log('Poll end time:', new Date(endTime * 1000));
+  console.log('Current time:', new Date(currentTime * 1000));
+  console.log('Time remaining:', endTime - currentTime, 'seconds');
+}
+
+checkPollDetails();
+
+export const endCurrentPoll = async (walletAddress) => {
+  try {
+    if (!walletAddress) {
+      throw new Error('No wallet address provided');
+    }
+
+    await moviePollContract.methods.endPoll().send({ from: walletAddress });
+    console.log('Poll ended successfully');
+    return { status: 'success' }; // Return an object indicating success
+  } catch (error) {
+    console.error('Error ending poll:', error);
+    return { status: 'error', message: error.message }; // Return an error object
   }
 };

@@ -6,15 +6,10 @@ import {
   walletListener,
   startPoll,
   vote,
+  endCurrentPoll,
 } from './utilities/ContractInteractions';
 
 const Voting = () => {
-  const hardCoadedMovies = [
-    { name: 'Matrix', voteCount: '10' },
-    { name: 'Godfather', voteCount: '5' },
-    { name: 'Batman', voteCount: '20' },
-  ];
-
   const [walletAddress, setWalletAddress] = useState('');
   const [status, setStatus] = useState('Unable to connect to the blockchain');
   const [pollStatus, setPollStatus] = useState('');
@@ -22,7 +17,7 @@ const Voting = () => {
   const [hasVoted, setHasVoted] = useState(false);
   const [movies, setMovies] = useState(['', '', '']);
   const [duration, setDuration] = useState('');
-  const [winner, setWinner] = useState('Batman');
+  const [winner, setWinner] = useState('');
 
   useEffect(() => {
     const intialize = async () => {
@@ -53,6 +48,17 @@ const Voting = () => {
     const newMovies = [...movies];
     newMovies[index] = value;
     setMovies(newMovies);
+  };
+
+  const handleDeletePoll = async () => {
+    const walletAddress = '0xeFBD7E00616089F5e917Baa61fdF92c2521Adf80'; // Replace this with the actual wallet address
+    const deletePoll = await endCurrentPoll(walletAddress);
+
+    if (deletePoll && deletePoll.status) {
+      setStatus(deletePoll.status);
+    } else {
+      console.error('Failed to retrieve poll status');
+    }
   };
 
   const handleSubmit = async (e) => {
@@ -142,9 +148,16 @@ const Voting = () => {
         {hasVoted && (
           <p className="alreadyVotedMessage">You have already voted!</p>
         )}
+
+        <button
+          className="walletButton"
+          onClick={handleDeletePoll}
+        >
+          End Poll
+        </button>
         <button
           className="Revote"
-          disacbled={!walletAddress || !hasVoted}
+          disabled={!walletAddress || !hasVoted}
         >
           Revote
         </button>
