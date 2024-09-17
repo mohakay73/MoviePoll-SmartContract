@@ -1,12 +1,12 @@
 import { useState, useEffect } from 'react';
 import {
-  checkIfVoted,
   connectWallet,
   getCurrentWalletConnected,
   walletListener,
-  startPoll,
-  vote,
-  endCurrentPoll,
+  checkIfVoted,
+  getPollStatus,
+  mapPollStatus,
+  eventListeners,
 } from './utilities/ContractInteractions';
 
 const Voting = () => {
@@ -26,11 +26,15 @@ const Voting = () => {
         setWalletAddress(address);
         setStatus(status);
 
+        const state = await getPollStatus();
+        setPollStatus(mapPollStatus(state));
+
         if (address) {
           const voted = await checkIfVoted(address);
           setHasVoted(voted);
         }
         walletListener(setWalletAddress, checkIfVoted, setHasVoted, setStatus);
+        eventListeners(setStatus, setPollStatus, setWinner);
       } catch (err) {
         setStatus('Errorloading contract data: ' + err.message);
       }
@@ -50,47 +54,12 @@ const Voting = () => {
     setMovies(newMovies);
   };
 
-  const handleDeletePoll = async () => {
-    const walletAddress = '0xeFBD7E00616089F5e917Baa61fdF92c2521Adf80'; // Replace this with the actual wallet address
-    const deletePoll = await endCurrentPoll(walletAddress);
-
-    if (deletePoll && deletePoll.status) {
-      setStatus(deletePoll.status);
-    } else {
-      console.error('Failed to retrieve poll status');
-    }
-  };
-
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-
-    const filteredMovies = movies.filter((movie) => movie.trim() !== '');
-
-    const result = await startPoll(walletAddress, movies, parseInt(duration));
-    setStatus(result.status);
-
-    if (result.status.startsWith('Successfully')) {
-      setPollStatus(true);
-      setMovies(filteredMovies);
-    }
-  };
-
-  const handleVote = async (movie) => {
-    const result = await vote(walletAddress, movie);
-    setStatus(result.status);
-  };
-
   if (pollStatus === 'Started') {
     return (
       <div>
         <h2>Vote for a Movie</h2>
         {movies.map((movie, index) => (
-          <button
-            key={index}
-            onClick={() => handleVote(movie)}
-          >
-            {movie}
-          </button>
+          <button key={index}>{movie}</button>
         ))}
         {status && <p>{status}</p>}
       </div>
@@ -125,7 +94,7 @@ const Voting = () => {
               : ''}
           </h3>
         </div>
-        <form onSubmit={handleSubmit}>
+        <form>
           {movies.map((movie, index) => (
             <input
               key={index}
@@ -149,12 +118,7 @@ const Voting = () => {
           <p className="alreadyVotedMessage">You have already voted!</p>
         )}
 
-        <button
-          className="walletButton"
-          onClick={handleDeletePoll}
-        >
-          End Poll
-        </button>
+        <button className="walletButton">End Poll</button>
         <button
           className="Revote"
           disabled={!walletAddress || !hasVoted}

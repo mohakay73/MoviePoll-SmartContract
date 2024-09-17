@@ -81,20 +81,6 @@ export const getCurrentWalletConnected = async () => {
   }
 };
 
-export const checkIfVoted = async (address) => {
-  try {
-    // Get the user's vote
-    const userVote = await moviePollContract.methods
-      .getUserVote(address)
-      .call();
-    // If the user's vote is not an empty string, they have voted
-    return userVote !== '';
-  } catch (err) {
-    console.error('Error checking if user voted:', err);
-    return false;
-  }
-};
-
 export const walletListener = (
   setWalletAddress,
   setStatus,
@@ -117,75 +103,59 @@ export const walletListener = (
   }
 };
 
-export const startPoll = async (walletAddress, movies, durationInMinutes) => {
-  try {
-    const pollStatus = await moviePollContract.methods.getPollStatus().call();
-    if (pollStatus !== '0') {
-      // '0' corresponds to NotStarted
-      return {
-        status:
-          'Cannot start a new poll: A poll is already active or has ended but not reset.',
-      };
-    }
+export const checkIfVoted = async (address) => {
+  const voted = await moviePollContract.methods.userVotes(address).call();
+  return voted;
+};
 
-    const durationInSeconds = durationInMinutes * 60;
-    const filteredMovies = movies.filter((movie) => movie.trim() !== '');
-    const result = await moviePollContract.methods
-      .startPoll(filteredMovies, durationInSeconds)
-      .send({ from: walletAddress });
+export const getPollStatus = async () => {
+  const state = await moviePollContract.methods.getPollStatus().call();
+  return state;
+};
 
-    return {
-      status: 'Successfully started the poll',
-      result: result,
-    };
-  } catch (err) {
-    console.error('Error in startPoll:', err);
-    return {
-      status: 'Error starting the poll: ' + err.message,
-    };
+export const mapPollStatus = (state) => {
+  switch (parseInt(state)) {
+    case 0:
+      return 'NotStarted';
+    case 1:
+      return 'Voting';
+    case 2:
+      return 'Ended';
+    default:
+      return 'Unknown state';
   }
 };
 
-export const vote = async (walletAddress, movie) => {
-  try {
-    await moviePollContract.methods.vote(movie).send({ from: walletAddress });
-    return {
-      status: `Successfully voted for ${movie}`,
-    };
-  } catch (err) {
-    return {
-      status: 'Error voting: ' + err.message,
-    };
-  }
-};
-
-const pollStatus = await moviePollContract.methods.getPollStatus().call();
-console.log('Current poll status:', pollStatus);
-
-async function checkPollDetails() {
-  const pollStatus = await moviePollContract.methods.getPollStatus().call();
-  console.log('Current poll status:', pollStatus);
-
-  const endTime = await moviePollContract.methods.currentPoll().call().endTime;
-  const currentTime = Math.floor(Date.now() / 1000);
-  console.log('Poll end time:', new Date(endTime * 1000));
-  console.log('Current time:', new Date(currentTime * 1000));
-  console.log('Time remaining:', endTime - currentTime, 'seconds');
-}
-
-checkPollDetails();
-
-export const endCurrentPoll = async (walletAddress) => {
-  try {
-    if (!walletAddress) {
-      throw new Error('No wallet address provided');
+export const eventListeners = (
+  setStatus,
+  setVotingState,
+  setWinner,
+  loadCandidates
+) => {
+  moviePollContract.events.votingStarted({}, (err) => {
+    if (err) {
+      setStatus(err.message);
+    } else {
+      setVotingState('Ongoing');
     }
+  });
 
-    await moviePollContract.methods.endPoll().send({ from: walletAddress });
-    console.log('Poll ended successfully');
-    return { status: 'success' }; // Return an object indicating success
-  } catch (error) {
-    console.error('Error ending poll:', error);
-    return { status: 'error', message: error.message }; // Return an error object
-  }
+  moviePollContract.events.VoteCast({}, async (err, data) => {
+    if (err) {
+      setStatus(err.message);
+    } else {
+      setStatus(
+        `Your vote for ${data.returnValues[0]} has been successfully cast!`
+      );
+    }
+  });
+
+  moviePollContract.events.VotingFinished({}, (err, data) => {
+    if (err) {
+      setStatus(err.message);
+    } else {
+      setVotingState('Finished');
+      setWinner(data.returnValues.winner);
+    }
+  });
 };
